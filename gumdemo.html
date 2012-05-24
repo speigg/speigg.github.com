@@ -36,26 +36,14 @@
     video.addEventListener( "timeupdate", function() {
         draw();
     }, false);
-    
-    window.requestAnimFrame = (function(){
-    return  window.requestAnimationFrame       || 
-            window.webkitRequestAnimationFrame || 
-            window.mozRequestAnimationFrame    || 
-            window.oRequestAnimationFrame      || 
-            window.msRequestAnimationFrame     || 
-            function( callback ){
-              window.setTimeout(callback, 1000 / 60);
-            };
-    })();
      
-    
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight; 
     
     var x=0, y=0, width=canvas.width, height=canvas.height;
     
     draw = function() {
-      //requestAnimFrame(draw);
+      scaleVideo();
       ctx.drawImage(video, x, y, width, height); 
     }
       
@@ -77,8 +65,6 @@
       }
     }
     setTimeout(scaleVideo,100);
-    
-    //draw();
     
     window.addEventListener("resize",scaleVideo,false);
     
