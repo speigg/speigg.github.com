@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset=utf-8 />
-<title>Copying video into canvas</title>
+<title>Camera Stream Demo</title>
 <script src="navigator.getusermedia.min.js"></script>
 </head>
 
@@ -18,53 +18,23 @@
     var canvas = document.querySelector('canvas');
     var ctx = canvas.getContext('2d');
     
-    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-    if (navigator.getUserMedia) {
-      navigator.getUserMedia({video: true}, successCallback);
-      function successCallback(stream) {
-        if (window.webkitURL) {
-          video.src = window.webkitURL.createObjectURL(stream);
-        } else {
-            video.src = stream;
-        }
-        
-        video.addEventListener( "timeupdate", function() {
-            //draw();
-        }, false);
-      }
-    }
-     
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight; 
-    
+    canvas.height = window.innerHeight;
     var x=0, y=0, width=canvas.width, height=canvas.height;
     
     draw = function() {
       ctx.drawImage(video, x, y, width, height); 
     }
-      
-    scaleVideo = function() {
-      var videoAspectRatio = video.videoWidth / video.videoHeight;
-      var canvasAspectRatio = canvas.width / canvas.height;
-      if (videoAspectRatio > canvasAspectRatio) {
-        var scaleFactor = canvas.width/video.videoWidth;
-        width = canvas.width;
-        height = video.videoHeight*scaleFactor;
-        x = 0;
-        y = (canvas.height-height)/2;
-      } else {
-        var scaleFactor = canvas.height/video.videoHeight;
-        width = video.videoWidth*scaleFactor;
-        height = canvas.height;
-        x = (canvas.width-width)/2;
-        y = 0;
+    
+    if (navigator.getUserMedia) {
+      navigator.getUserMedia({video: true}, successCallback);
+      function successCallback(stream, raw) {
+        video.src = raw;
+        video.addEventListener( "timeupdate", function() {
+            //draw();
+        }, false);
       }
-    }
-    setTimeout(scaleVideo,100);
-    
-    setInterval(scaleVideo,1000);
-    
-    window.addEventListener("resize",scaleVideo,false);
+    } 
     
   </script>
 </body>
