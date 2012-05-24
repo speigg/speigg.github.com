@@ -33,6 +33,10 @@
       }
     }
     
+    video.addEventListener( "timeupdate", function() {
+        draw();
+    }, false);
+    
     window.requestAnimFrame = (function(){
     return  window.requestAnimationFrame       || 
             window.webkitRequestAnimationFrame || 
@@ -47,7 +51,7 @@
     var x, y, width, height;
     
     draw = function() {
-      requestAnimFrame(draw);
+      //requestAnimFrame(draw);
       ctx.drawImage(video, x, y, width, height); 
     }
       
@@ -72,7 +76,7 @@
     }
     setTimeout(scaleVideo,100);
     
-    draw();
+    //draw();
     
     window.addEventListener("resize",scaleVideo,false);
     
