@@ -48,7 +48,11 @@
             };
     })();
      
-    var x, y, width, height;
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight; 
+    
+    var x=0, y=0, width=canvas.width, height=canvas.height;
     
     draw = function() {
       //requestAnimFrame(draw);
@@ -56,8 +60,6 @@
     }
       
     scaleVideo = function() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
       var videoAspectRatio = video.videoWidth / video.videoHeight;
       var canvasAspectRatio = canvas.width / canvas.height;
       if (videoAspectRatio > canvasAspectRatio) {
