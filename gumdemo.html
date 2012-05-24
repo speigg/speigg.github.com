@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Copying video into canvas</title>
+
+</head>
+<body>
+  <video height="0" width="0" autoplay muted></video>
+  <canvas style="position:absolute; top:0; bottom:0; left:0; right:0; height:100%; width:100%"></canvas>
+  
+  <script>
+    var video = document.querySelector('video');
+    var canvas = document.querySelector('canvas');
+    var ctx = canvas.getContext('2d');
+    
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+    if (navigator.getUserMedia) {
+      navigator.getUserMedia('video', successCallback, errorCallback);
+      // Below is latest syntax. Using old syntax for backwards compatibility.
+      //navigator.getUserMedia({video: true}, successCallback, errorCallback);
+      function successCallback(stream) {
+        window.stream = stream;
+        if (window.webkitURL) {
+          video.src = window.webkitURL.createObjectURL(stream);
+        } else {
+          video.src = stream;
+        }
+      }
+      function errorCallback(error) {
+        console.error('An error occurred: [CODE ' + error.code + ']');
+        return;
+      }
+    }
+    
+    window.requestAnimFrame = (function(){
+    return  window.requestAnimationFrame       || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame    || 
+            window.oRequestAnimationFrame      || 
+            window.msRequestAnimationFrame     || 
+            function( callback ){
+              window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+     
+    var x, y, width, height;
+    
+    draw = function() {
+      requestAnimFrame(draw);
+      ctx.drawImage(video, x, y, width, height); 
+    }
+      
+    scaleVideo = function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      var videoAspectRatio = video.videoWidth / video.videoHeight;
+      var canvasAspectRatio = canvas.width / canvas.height;
+      if (videoAspectRatio > canvasAspectRatio) {
+        var scaleFactor = canvas.width/video.videoWidth;
+        width = canvas.width;
+        height = video.videoHeight*scaleFactor;
+        x = 0;
+        y = (canvas.height-height)/2;
+      } else {
+        var scaleFactor = canvas.height/video.videoHeight;
+        width = video.videoWidth*scaleFactor;
+        height = canvas.height;
+        x = (canvas.width-width)/2;
+        y = 0;
+      }
+    }
+    setTimeout(scaleVideo,100);
+    
+    draw();
+    
+    window.addEventListener("resize",scaleVideo,false);
+    
+  </script>
+</body>
+</html>
