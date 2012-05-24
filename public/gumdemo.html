@@ -3,39 +3,36 @@
 <head>
 <meta charset=utf-8 />
 <title>Copying video into canvas</title>
-
+<script src="navigator.getusermedia.min.js"></script>
 </head>
+
 <body>
-  <video height="0" width="0" autoplay muted></video>
-  <canvas style="position:absolute; top:0; bottom:0; left:0; right:0; height:100%; width:100%"></canvas>
+  <video autoplay muted></video>
+  <div id="canvas_container">
+    <canvas style="position:absolute; top:0; bottom:0; left:0; right:0; height:100%; width:100%"></canvas>
+  </div>
   
+
   <script>
     var video = document.querySelector('video');
     var canvas = document.querySelector('canvas');
     var ctx = canvas.getContext('2d');
     
-    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia;
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     if (navigator.getUserMedia) {
-      navigator.getUserMedia('video', successCallback, errorCallback);
-      // Below is latest syntax. Using old syntax for backwards compatibility.
-      //navigator.getUserMedia({video: true}, successCallback, errorCallback);
+      navigator.getUserMedia({video: true}, successCallback);
       function successCallback(stream) {
-        window.stream = stream;
         if (window.webkitURL) {
           video.src = window.webkitURL.createObjectURL(stream);
         } else {
-          video.src = stream;
+            video.src = stream;
         }
-      }
-      function errorCallback(error) {
-        console.error('An error occurred: [CODE ' + error.code + ']');
-        return;
+        
+        video.addEventListener( "timeupdate", function() {
+            //draw();
+        }, false);
       }
     }
-    
-    video.addEventListener( "timeupdate", function() {
-        draw();
-    }, false);
      
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight; 
@@ -63,6 +60,8 @@
         y = 0;
       }
     }
+    setTimeout(scaleVideo,100);
+    
     setInterval(scaleVideo,1000);
     
     window.addEventListener("resize",scaleVideo,false);

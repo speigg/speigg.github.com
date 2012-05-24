@@ -1,17 +1,32 @@
-var http = require('http');
-
-var content = [
-    "Hello Cloud Foundry from Cloud9 IDE",
-    "",
-    "This is a placeholder file, Cloud Foundry requires you to have a main entry file with one of these names: 'main.js', 'index.js', 'app.js' or 'server.js'",
-    "You can replace the content of your 'main.js' file in Cloud9 with the following code:",
-    "",
-    'module.exports = require("./your-app")',
-    "",
-    'Where "./your-app" points to "your-app.js" in the root of your project.'
-];
-    
-http.createServer(function (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end(content.join("\n"));
-}).listen(process.env.PORT || process.env.VCAP_APP_PORT);
+// *******************************************************
+// expressjs template
+//
+// assumes: npm install express
+// defaults to jade engine, install others as needed
+//
+// assumes these subfolders:
+//   public/
+//   public/javascripts/
+//   public/stylesheets/
+//   views/
+//
+var express = require('express');
+var app = module.exports = express.createServer();
+var viewEngine = 'jade'; // modify for your view engine
+// Configuration
+app.configure(function(){
+  app.set('views', __dirname + '/views');
+  app.set('view engine', viewEngine);
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(app.router);
+  app.use(express.static(__dirname + '/public'));  
+  app.listen(process.env.PORT || process.env.VCAP_APP_PORT);
+});
+app.configure('development', function(){
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+});
+app.configure('production', function(){
+  app.use(express.errorHandler());
+});
+// *******************************************************
