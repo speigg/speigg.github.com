@@ -1,41 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset=utf-8 />
-<title>Camera Stream Demo</title>
-<script src="navigator.getusermedia.min.js"></script>
-</head>
+    <head>
+        <title>Camera Stream Demo</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            #glContainer {position:absolute; top:0; bottom:0; left:0; right:0; height:100%; width:100%}
+            #video {position:absolute; right:0; top:0; height:15%; width:15%;}
+            body {
+                	font-family: Monospace;
+    				background-color: #525252;
+    				margin: 0px;
+    				overflow: hidden;
+    			}
+        </style>
+    </head>
+    <body>
+        <script src="scripts/navigator.getusermedia.min.js"></script>
+        <script src="scripts/dat.gui.min.js"></script>
+        <script src="scripts/THREEx.WindowResize.js"></script>
+        <script src="scripts/Three.js"></script>
 
-<body>
-  <video autoplay muted></video>
-  <div id="canvas_container">
-    <canvas style="position:absolute; top:0; bottom:0; left:0; right:0; height:100%; width:100%"></canvas>
-  </div>
-  
+        <video id="video" autoplay muted></video>
+        <div id="glContainer"></div>
+        
+        <script>
+            var video = document.querySelector('video');
+            var glContainer = document.querySelector('#glContainer');
+            
+            var videoTex, videoScene, videoCam, videoPlane;
+            var controls, renderer;
+            
+            var cropBlackBars = false;
+            
+            init();
+            animate();
+            
+            function init() {
+                
+                var WIDTH = glContainer.clientWidth,
+                    HEIGHT = glContainer.clientHeight;
+                
+    			renderer = new THREE.WebGLRenderer();
+                renderer.setSize( WIDTH, HEIGHT );
+                glContainer.appendChild(renderer.domElement);
+                
+                videoTex = new THREE.Texture(video);
+                videoTex.generateMipmaps = false;
+    			videoTex.minFilter = THREE.LinearFilter;
+    			videoTex.magFilter = THREE.LinearFilter;
+                
+                videoPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(1, 1, 2),
+                    new THREE.MeshBasicMaterial({map: videoTex})
+                );
+                
+                videoPlane.material.depthTest = false;
+                videoPlane.material.depthWrite = false;
+                videoPlane.rotation.x = Math.PI/2;
+                
+                //videoCam = new THREE.CombinedCamera( WIDTH, HEIGHT, 45, 0.01, 1000, -1000, 1000 );
+                //videoCam.toOrthographic();
+                
+                videoCam = new THREE.OrthographicCamera( WIDTH / - 2, WIDTH / 2, HEIGHT / 2, HEIGHT / - 2, -1000, 1000 );
+                //videoCam = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 0.01, 10000 );
+                
+                videoScene = new THREE.Scene();
+                videoScene.add(videoCam);
+                videoScene.add(videoPlane);
 
-  <script>
-    var video = document.querySelector('video');
-    var canvas = document.querySelector('canvas');
-    var ctx = canvas.getContext('2d');
+                videoCam.position.z = 100; // needed for controls to work in Orthographic mode
+                controls = new THREE.TrackballControls( videoCam, glContainer );        
+                
+                navigator.getUserMedia({video: true}, successCallback);
+                
+                function successCallback(raw, stream) {
+                    
+                    video.src = stream;
+                    /*
+                    video.addEventListener("timeupdate", function() {
+                        videoCanvas.width = video.videoWidth;
+                        videoCanvas.height = video.videoHeight;
+                        videoCanvas.getContext('2d').drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);
+                    }, false);
+                    
+                    video.addEventListener("loadedmetadata", function() {
+                         //videoPlane.scale.set(video.videoWidth, 1, video.videoHeight);                
+                        maximizeVideo();
+                    }, false);
+                    
+                    */
+                }
+                
+                createGUI();
+                
+                THREEx.WindowResize(renderer, videoCam);
+            }
+            
+            function createGUI() {
+             
+                var gui = new dat.GUI(), folder;
+                
+                folder = gui.addFolder('Video Plane Size');
+                folder.add(videoPlane.scale,'x',0,1500).listen();
+                folder.add(videoPlane.scale,'y',0,1500).listen();
+                folder.add(videoPlane.scale,'z',0,1500).listen();
+                folder.open();
+                
+                folder = gui.addFolder('Video Size');
+                folder.add(video,'videoWidth').listen();
+                folder.add(video,'videoHeight').listen();
+                folder.open();
+                
+                folder = gui.addFolder('Cam Size');
+                folder.add(videoCam,'left').listen();
+                folder.add(videoCam,'right').listen();
+                folder.add(videoCam,'top').listen();
+                folder.add(videoCam,'bottom').listen();
+                folder.open();
+                
+                folder = gui.addFolder('Container Size');
+                folder.add(glContainer,'clientWidth').listen();
+                folder.add(glContainer,'clientHeight').listen();
+                folder.open();
+                
+                gui.add(this,'cropBlackBars').listen();
+             
+            }
+            
+            function maximizeVideo() {
+                
+                cropBlackBars = cropBlackBars || false;
+                
+                var targetWidth = glContainer.clientWidth,
+                    targetHeight = glContainer.clientHeight,
+                    currentWidth = video.videoWidth,
+                    currentHeight = video.videoHeight;
+                    
+                var ratioW = targetWidth / currentWidth;
+                var ratioH = targetHeight / currentHeight;
+                
+                var ratio;
+                
+                if (cropBlackBars) {
+                    ratio = ratioW > ratioH ? ratioW : ratioH; // largest ratio fits without border
+                } else {
+                    ratio = ratioW < ratioH ? ratioW : ratioH; // smallest ratio fits with border
+                }
+                
+                var newWidth = currentWidth * ratio;
+                var newHeight = currentHeight * ratio;
+                
+                videoPlane.scale.set(newWidth, 1, newHeight);
+                
+            }
+            
+            function animate() {
+                
+        		requestAnimationFrame( animate );
     
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    var x=0, y=0, width=canvas.width, height=canvas.height;
+    			render();
+                
+    		}
+            
+            function render() {
     
-    draw = function() {
-      ctx.drawImage(video, x, y, width, height); 
-    }
+    			if ( video.readyState === video.HAVE_ENOUGH_DATA ) {
     
-    if (navigator.getUserMedia) {
-      navigator.getUserMedia({video: true}, successCallback);
-      function successCallback(stream, raw) {
-        video.src = raw;
-        video.addEventListener( "timeupdate", function() {
-            //draw();
-        }, false);
-      }
-    } 
+    				if ( videoTex ) videoTex.needsUpdate = true;
+                
+                    maximizeVideo();
+    			}
+                
+                controls.update();
+                
+                
+        	    renderer.render( videoScene, videoCam );
+                
+            }
     
-  </script>
-</body>
+        </script>
+    
+    </body>
 </html>
